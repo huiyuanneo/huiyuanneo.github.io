@@ -1,0 +1,1871 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image & PDF Survey with Save Progress</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            max-width: 900px; 
+            margin: 0 auto; 
+            padding: 20px; 
+            background-color: #f5f5f5;
+        }
+        
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .progress-bar {
+            background: #e9ecef;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: bold;
+        }
+        
+        .progress-visual {
+            width: 100%;
+            height: 20px;
+            background-color: #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background-color: #28a745;
+            transition: width 0.3s ease;
+            border-radius: 10px;
+        }
+        
+        .save-load-section {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .save-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin: 15px 0;
+        }
+        
+        .image-container { 
+            text-align: center; 
+            margin: 30px 0; 
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .image-container img { 
+            max-width: 100%; 
+            max-height: 400px;
+            height: auto; 
+            border: 3px solid #007bff; 
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        .image-container iframe,
+        .image-container embed {
+            width: 100%;
+            height: 500px;
+            border: 3px solid #007bff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        .pdf-fallback {
+            padding: 15px;
+            background: #e9ecef;
+            border-radius: 8px;
+            text-align: center;
+            margin-top: 10px;
+        }
+        
+        .pdf-fallback a {
+            color: #007bff;
+            font-weight: bold;
+            text-decoration: none;
+        }
+        
+        .pdf-fallback a:hover {
+            text-decoration: underline;
+        }
+        
+        .conditional-questions {
+            transition: opacity 0.3s ease, max-height 0.3s ease;
+        }
+        
+        .conditional-questions.hidden-conditional {
+            opacity: 0.3;
+            pointer-events: none;
+        }
+        
+        .conditional-questions.hidden-conditional::before {
+            content: "Questions 2-15 are not applicable when there is no data request";
+            display: block;
+            background: #fff3cd;
+            color: #856404;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            font-weight: bold;
+            text-align: center;
+        }
+        
+        .form-section { 
+            background: #f8f9fa; 
+            padding: 25px; 
+            border-radius: 8px; 
+            margin: 20px 0; 
+            border-left: 5px solid #007bff;
+        }
+        
+        .question-block {
+            margin: 20px 0;
+            padding: 15px;
+            background: white;
+            border-radius: 5px;
+        }
+        
+        .checkbox-group {
+            margin: 10px 0;
+        }
+        
+        .checkbox-group label {
+            margin-left: 8px;
+            font-weight: normal;
+        }
+        
+        .buttons { 
+            display: flex; 
+            gap: 15px; 
+            justify-content: center; 
+            margin: 30px 0; 
+            flex-wrap: wrap;
+        }
+        
+        button { 
+            padding: 12px 24px; 
+            border: none; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            font-size: 14px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            min-width: 120px;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .btn-warning { 
+            background: #ffc107; 
+            color: #212529;
+        }
+        
+        .btn-primary { 
+            background: #007bff; 
+            color: white; 
+        }
+        
+        .btn-success { 
+            background: #28a745; 
+            color: white; 
+        }
+        
+        .btn-info {
+            background: #17a2b8;
+            color: white;
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .results { 
+            margin: 20px 0; 
+        }
+        
+        table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            margin: 20px 0;
+        }
+        
+        th, td { 
+            border: 1px solid #ddd; 
+            padding: 12px 8px; 
+            text-align: left; 
+        }
+        
+        th { 
+            background: #007bff; 
+            color: white;
+            font-weight: bold;
+        }
+        
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .alert {
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .alert-warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        
+        .alert-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        
+        .file-input {
+            margin: 20px 0;
+            padding: 15px;
+            background: #e9ecef;
+            border-radius: 5px;
+        }
+        
+        input[type="file"] {
+            margin: 10px 0;
+        }
+        
+        #image-list {
+            background: white;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .text-input {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            font-family: Arial, sans-serif;
+        }
+        
+        textarea.text-input {
+            resize: vertical;
+            min-height: 80px;
+        }
+        
+        .input-help {
+            color: #666;
+            font-style: italic;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+        
+        .load-progress-section {
+            background: #d1ecf1;
+            border: 2px solid #17a2b8;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .session-info {
+            background: #e2e3e5;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        
+        .auto-save-indicator {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #28a745;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            transition: all 0.3s ease;
+        }
+        
+        .auto-save-indicator.saving {
+            background: #ffc107;
+            color: #212529;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 Image & PDF Response Survey</h1>
+        
+        <!-- Auto-save indicator -->
+        <div id="auto-save-indicator" class="auto-save-indicator hidden">
+            ✓ Progress Saved
+        </div>
+        
+        <!-- Load Previous Progress Section -->
+        <div id="load-progress-section" class="load-progress-section">
+            <h3>📂 Load Previous Progress</h3>
+            <p>If you have a previous session file, you can continue where you left off:</p>
+            <input type="file" id="progress-file" accept=".json">
+            <button class="btn-info" onclick="loadProgress()">Load Previous Session</button>
+            
+            <div id="progress-info" class="session-info hidden">
+                <strong>Session Information:</strong><br>
+                <span id="session-details"></span>
+            </div>
+        </div>
+        
+        <!-- Start New Session Section -->
+        <div id="new-session-section" class="save-load-section" style="background: #d1ecf1; border-color: #17a2b8;">
+            <h3>🆕 Start New Session</h3>
+            <p>Begin a fresh survey session. This will clear any saved progress.</p>
+            <button class="btn-primary" onclick="startNewSession()">Start New Session</button>
+        </div>
+        
+        <!-- Image Upload Section -->
+        <div id="setup-section">
+            <div class="file-input">
+                <h3>🖼️ Load Your Images & PDFs</h3>
+                <p>Select multiple images or PDF files from your computer:</p>
+                <input type="file" id="image-files" multiple accept="image/*,.pdf,application/pdf">
+                <button class="btn-primary" onclick="loadImages()">Load Files</button>
+                
+                <div id="image-list" class="hidden">
+                    <h4>Loaded Files:</h4>
+                    <ul id="loaded-images-list"></ul>
+                </div>
+                
+                <button class="btn-success hidden" id="start-survey-btn" onclick="startSurvey()">Start Survey</button>
+            </div>
+        </div>
+        
+        <!-- Save/Load Progress Controls -->
+        <div id="save-load-controls" class="save-load-section hidden">
+            <h4>💾 Save & Load Progress</h4>
+            <p><strong>Manual Save Only:</strong> Click "Save Progress Now" to save your current position. Export session file to save with images.</p>
+            
+            <div class="save-buttons">
+                <button class="btn-secondary" onclick="saveProgressManual()">💾 Save Progress Now</button>
+                <button class="btn-info" onclick="exportSession()">📤 Export Session File</button>
+                <button class="btn-warning" onclick="clearProgress()">🗑️ Clear Saved Progress</button>
+            </div>
+            
+            <div class="session-info">
+                <strong>Current Session:</strong><br>
+                <span id="current-session-info">No active session</span>
+            </div>
+        </div>
+        
+        <!-- Progress Bar -->
+        <div id="progress" class="progress-bar hidden">
+            <div id="progress-text">Image 1 of 0, Response Set 1</div>
+            <div class="progress-visual">
+                <div id="progress-fill" class="progress-fill" style="width: 0%"></div>
+            </div>
+            <div id="completion-stats">0% Complete • 0 responses collected</div>
+        </div>
+        
+        <!-- Survey Section -->
+        <div id="survey-section" class="hidden">
+            <div class="image-container">
+                <h3 id="image-title">Image 1 - Response Set 1</h3>
+		<h3 id="file-name-title">Filename: <span id="file-name"></span></h3>
+                <img id="current-image" src="" alt="Survey Image" onerror="handleImageError()">
+                <iframe id="current-pdf" src="" style="display: none;" title="Survey PDF"></iframe>
+                <div id="pdf-fallback" class="pdf-fallback" style="display: none;">
+                    <p>If the PDF doesn't display properly, <a id="pdf-new-tab-link" href="#" target="_blank" rel="noopener">click here to open it in a new tab</a></p>
+                </div>
+            </div>
+            
+            <div class="form-section">
+                <h4>📝 Your Response</h4>
+                
+                <!-- Question 1: Is there a data request? -->
+                <div class="question-block">
+                    <label><strong>1. Is there a data request?</strong></label><br>
+                    <div class="checkbox-group">
+                        <input type="checkbox" name="data_request" value="Yes" id="yes">
+                        <label for="yes">Yes</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" name="data_request" value="No" id="no">
+                        <label for="no">No</label>
+                    </div>
+                </div>
+                
+                <!-- Conditional questions container (shown only when data_request = Yes) -->
+                <div id="conditional-questions" class="conditional-questions">
+                
+                <!-- Question 2: How many data points provided -->
+                <div class="question-block">
+                    <label for="data_points_provided"><strong>2. How many data points did the government provide in their answer?</strong></label><br>
+                    <input type="text" id="data_points_provided" class="text-input" placeholder="Enter number or description (e.g., '5', 'multiple tables', 'see attachment')">
+                    <div class="input-help">You can enter a number or describe the data provided</div>
+                </div>
+
+                <!-- Question 3: All requested variables -->
+                <div class="question-block">
+                    <label><strong>3. Did the government's response account for all requested variables in the MP's question?</strong></label><br>
+                    <div class="checkbox-group">
+                        <input type="checkbox" name="all_variables" value="Yes, fully matched" id="all_vars_yes">
+                        <label for="all_vars_yes">Yes, fully matched</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" name="all_variables" value="No, provided data on additional variables" id="all_vars_additional">
+                        <label for="all_vars_additional">No, provided data on additional variables</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" name="all_variables" value="No, data on some requested variables were missing" id="all_vars_missing">
+                        <label for="all_vars_missing">No, data on some requested variables were missing</label>
+                    </div>
+                </div>
+                
+                <!-- Question 4: Variable granularity difference -->
+                <div class="question-block">
+                    <label><strong>4. Was there a variable where the granularity of the data provided differed from that requested (e.g. national instead of state-level data)?</strong></label><br>
+                    <div class="checkbox-group">
+                        <input type="checkbox" name="granularity_match" value="No, fully matched" id="fully_matched">
+                        <label for="fully_matched">No, fully matched</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" name="granularity_match" value="Yes, provided more granular data" id="more_granular">
+                        <label for="more_granular">Yes, provided more granular data</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" name="granularity_match" value="Yes, provided less granular data" id="less_granular">
+                        <label for="less_granular">Yes, provided less granular data</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" name="granularity_match" value="N.A." id="granularity_na">
+                        <label for="granularity_na">N.A.</label>
+                    </div>
+                </div>
+
+                <!-- Question 5: Attribute data difference -->
+                <div class="question-block">
+                    <label><strong>5. Was there a variable where the attribute data provided differed from that requested?</strong></label><br>
+                    <div class="checkbox-group">
+                        <input type="checkbox" name="attribute_match" value="No, fully matched" id="attribute_no">
+                        <label for="attribute_no">No, fully matched</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" name="attribute_match" value="Yes, data on additional attributes were provided" id="attribute_additional">
+                        <label for="attribute_additional">Yes, data on additional attributes were provided</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" name="attribute_match" value="Yes, data on requested attributes were missing" id="attribute_missing">
+                        <label for="attribute_missing">Yes, data on requested attributes were missing</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" name="attribute_match" value="N.A." id="attribute_na">
+                        <label for="attribute_na">N.A.</label>
+                    </div>
+                </div>
+                
+                <!-- Question 6: Temporal granularity difference -->
+                <div class="question-block">
+                    <label><strong>6. Was there a variable where the temporal granularity of the data provided differed from that requested (e.g. annual instead of monthly data)?</strong></label><br>
+                    <div class="checkbox-group">
+                        <input type="checkbox" name="temporal_granularity" value="No, fully matched" id="temporal_fully_matched">
+                        <label for="temporal_fully_matched">No, fully matched</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" name="temporal_granularity" value="Yes, provided more granular data" id="temporal_more_granular">
+                        <label for="temporal_more_granular">Yes, provided more granular data</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" name="temporal_granularity" value="Yes, provided less granular data" id="temporal_less_granular">
+                        <label for="temporal_less_granular">Yes, provided less granular data</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" name="temporal_granularity" value="N.A." id="temporal_granularity_na">
+                        <label for="temporal_granularity_na">N.A.</label>
+                    </div>
+                </div>
+                
+                <!-- Question 7: Temporal coverage shift -->
+                <div class="question-block">
+                    <label><strong>7. Did the government's reply shift or redefine the temporal coverage of the data (e.g. provides "data since 2010" when MP asked for "2015–2018")?</strong></label><br>
+                    <div class="checkbox-group">
+                        <input type="checkbox" name="temporal_coverage" value="No, fully matched" id="temporal_fully">
+                        <label for="temporal_fully">No, fully matched</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" name="temporal_coverage" value="Yes, shifted earlier" id="temporal_earlier">
+                        <label for="temporal_earlier">Yes, shifted earlier</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" name="temporal_coverage" value="Yes, shifted later" id="temporal_later">
+                        <label for="temporal_later">Yes, shifted later</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" name="temporal_coverage" value="Government did not state timeframe" id="temporal_gov_no">
+                        <label for="temporal_gov_no">Government did not state timeframe</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" name="temporal_coverage" value="MP did not state timeframe" id="temporal_mp_no">
+                        <label for="temporal_mp_no">MP did not state timeframe</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" name="temporal_coverage" value="N.A." id="temporal_coverage_na">
+                        <label for="temporal_coverage_na">N.A.</label>
+                    </div>
+                </div>
+                
+                <!-- Question 8: Comparative statistic difference -->
+                <div class="question-block">
+                    <label><strong>8. Was there a variable where the comparative statistic of the data provided differed from that requested (e.g., providing percentage instead of absolute number, or different reference year)?</strong></label><br>
+		    <div class="checkbox-group">
+                        <input type="checkbox" name="baseline_shift" value="No, comparative statistic did not change" id="baseline_no">
+                        <label for="baseline_no">No, comparative statistic did not change</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" name="baseline_shift" value="Yes, comparative statistic changed" id="baseline_yes">
+                        <label for="baseline_yes">Yes, comparative statistic changed</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" name="baseline_shift" value="N.A." id="baseline_na">
+                        <label for="baseline_na">N.A.</label>
+                    </div>
+                </div>
+                
+                <!-- Question 9: Variable redefinition -->
+                <div class="question-block">
+                    <label><strong>9. Was there a variable where the government redefined or reconceptualized the data or indicator in their answer? (e.g., MP asked for "poverty" but answer gives "low-income households")</strong></label><br>
+                    <div class="checkbox-group">
+                        <input type="checkbox" name="variable_redefined" value="No, variable definition matches" id="var_redef_no">
+                        <label for="var_redef_no">No, variable definition matches</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" name="variable_redefined" value="Yes, variable definition does not match" id="var_redef_yes">
+                        <label for="var_redef_yes">Yes, variable definition does not match</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" name="variable_redefined" value="N.A." id="var_redef_na">
+                        <label for="var_redef_na">N.A.</label>
+                    </div>
+                </div>
+                
+                <!-- Question 10: What was changed or missing -->
+                <div class="question-block">
+                    <label for="what_changed"><strong>10. What was changed or missing?</strong></label><br>
+                    <input type="text" id="what_changed" class="text-input" placeholder="Enter description of what was changed or missing">
+                </div>
+                
+                <!-- Question 11: All parts answered -->
+                <div class="question-block">
+                    <label><strong>11. Did the government answer all parts of the questions?</strong></label><br>
+                    <div class="checkbox-group">
+                        <input type="checkbox" name="all_parts" value="Yes, fully answered" id="all_parts_yes">
+                        <label for="all_parts_yes">Yes, fully answered</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" name="all_parts" value="Partially answered" id="all_parts_partial">
+                        <label for="all_parts_partial">Partially answered</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" name="all_parts" value="No, not answered at all" id="all_parts_no">
+                        <label for="all_parts_no">No, not answered at all</label>
+                    </div>
+                </div>
+                
+                <!-- Question 12: Thematically answers question -->
+                <div class="question-block">
+                    <label><strong>12. Thematically, does the government's response answer the question?</strong></label><br>
+                    <div class="checkbox-group">
+                        <input type="checkbox" name="thematic_answer" value="Yes" id="thematic_yes">
+                        <label for="thematic_yes">Yes</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" name="thematic_answer" value="No" id="thematic_no">
+                        <label for="thematic_no">No</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" name="thematic_answer" value="N.A." id="thematic_na">
+                        <label for="thematic_na">N.A.</label>
+                    </div>
+                </div>
+                
+                <!-- Question 13: Justification for withholding -->
+                <div class="question-block">
+                    <label><strong>13. Did the government provide a justification for withholding or altering data?</strong></label><br>
+                    <div class="checkbox-group">
+                        <input type="checkbox" name="justification" value="No justification provided" id="just_none">
+                        <label for="just_none">No justification provided</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" name="justification" value="Yes, citing data availability" id="just_availability">
+                        <label for="just_availability">Yes, citing data availability</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" name="justification" value="Yes, citing confidentiality" id="just_confidentiality">
+                        <label for="just_confidentiality">Yes, citing confidentiality</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" name="justification" value="Yes, citing irrelevance" id="just_irrelevance">
+                        <label for="just_irrelevance">Yes, citing irrelevance</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" name="justification" value="Yes, stating that it can be found in official reports or guidelines" id="just_reports">
+                        <label for="just_reports">Yes, stating that it can be found in official reports or guidelines</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" name="justification" value="Yes, refer to other authorities" id="just_authorities">
+                        <label for="just_authorities">Yes, refer to other authorities</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" name="justification" value="Yes, stating that requested data or breakdown was not collected, thus cannot provide requested data/breakdown" id="just_breakdown">
+                        <label for="just_breakdown">Yes, stating that requested data or breakdown was not collected, thus cannot provide requested data/breakdown</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" name="justification" value="Other justifications" id="just_other">
+                        <label for="just_other">Other justifications</label>
+                    </div>
+                </div>
+                
+                <!-- Question 14: Other notes -->
+                <div class="question-block">
+                    <label for="other_notes"><strong>14. Any other notes or remarks on this parliamentary exchange.</strong></label><br>
+                    <textarea id="other_notes" class="text-input" rows="4" placeholder="Enter any additional notes or remarks"></textarea>
+                </div>
+
+                <!-- Question 15: PQ Topic -->
+                <div class="question-block">
+                    <label for="pq_topic"><strong>15. What was the topic discussed?</strong></label><br>
+                    <textarea id="pq_topic" class="text-input" rows="4" placeholder="State the topic discussed"></textarea>
+                </div>
+                
+                </div><!-- End of conditional-questions -->
+                
+                <div class="buttons">
+                    <button class="btn-warning" onclick="repeatImage()">🔁 Repeat This File</button>
+                    <button class="btn-primary" onclick="nextImage()">➡️ Next File</button>
+                    <button class="btn-success" onclick="finishSurvey()">✅ Finish Survey</button>
+                </div>
+                
+                <!-- Quick navigation -->
+                <div style="margin-top: 20px; text-align: center;">
+                    <button class="btn-secondary" onclick="goToPreviousImage()" id="prev-btn">⬅️ Previous File</button>
+                    <button class="btn-secondary" onclick="jumpToImage()" style="margin: 0 10px;">🔍 Jump to File...</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Results Section -->
+        <div id="results-section" class="hidden">
+            <h2>🎉 Survey Complete!</h2>
+            <p>Thank you for your responses. Total responses collected: <strong id="total-responses">0</strong></p>
+            
+            <div class="buttons">
+                <button class="btn-info" onclick="downloadResults()">📥 Download CSV</button>
+                <button class="btn-secondary" onclick="exportSession()">📤 Export Session</button>
+                <button class="btn-warning" onclick="resetSurvey()">🔄 Start New Survey</button>
+            </div>
+            
+            <div id="results-table"></div>
+        </div>
+        
+        <!-- Alert Messages -->
+        <div id="alert-container"></div>
+    </div>
+
+    <script>
+        // Global variables
+        let imageFiles = [];
+        let imageDataUrls = [];
+        let fileTypes = []; // Track whether each file is 'image' or 'pdf'
+        let currentImageIndex = 0;
+        let currentIteration = 1;
+        let responses = [];
+        let surveyStarted = false;
+        let sessionId = null;
+        let autoSaveInterval = null;
+        let loadingForSessionFile = false; // Flag to track if loading images for a session file
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            generateSessionId();
+            checkForSavedProgress();
+            showAlert('Welcome! Load images to start, or continue a previous session.', 'info');
+        });
+
+        // Start a new session
+        function startNewSession() {
+            if (confirm('Are you sure you want to start a new session? This will clear any saved progress in your browser.')) {
+                // Reset all variables
+                imageFiles = [];
+                imageDataUrls = [];
+                fileTypes = [];
+                currentImageIndex = 0;
+                currentIteration = 1;
+                responses = [];
+                surveyStarted = false;
+                loadingForSessionFile = false;
+                if (window.pendingSessionRestore) {
+                    delete window.pendingSessionRestore;
+                }
+                if (window.pendingFormState) {
+                    delete window.pendingFormState;
+                }
+                
+                // Generate new session ID
+                generateSessionId();
+                
+                // Clear localStorage
+                localStorage.removeItem('imageSurveyProgress');
+                stopAutoSave();
+                
+                // Reset UI to initial state
+                document.getElementById('load-progress-section').classList.remove('hidden');
+                document.getElementById('setup-section').classList.remove('hidden');
+                document.getElementById('save-load-controls').classList.add('hidden');
+                document.getElementById('progress').classList.add('hidden');
+                document.getElementById('survey-section').classList.add('hidden');
+                document.getElementById('results-section').classList.add('hidden');
+                document.getElementById('image-list').classList.add('hidden');
+                document.getElementById('start-survey-btn').classList.add('hidden');
+                document.getElementById('progress-info').classList.add('hidden');
+                document.getElementById('image-files').value = '';
+                document.getElementById('progress-file').value = '';
+                
+                // Clear form
+                clearForm();
+                
+                showAlert('New session started! Please load images to begin.', 'success');
+            }
+        }
+
+        // Generate unique session ID
+        function generateSessionId() {
+            sessionId = 'survey_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        }
+
+        // Check for existing saved progress
+        function checkForSavedProgress() {
+            const savedProgress = localStorage.getItem('imageSurveyProgress');
+            if (savedProgress) {
+                try {
+                    const progressData = JSON.parse(savedProgress);
+                    // Hide image upload section since we have saved progress
+                    document.getElementById('setup-section').classList.add('hidden');
+                    document.getElementById('progress-info').classList.remove('hidden');
+                    document.getElementById('session-details').innerHTML = `
+                        Session ID: ${progressData.sessionId}<br>
+                        Date: ${new Date(progressData.timestamp).toLocaleString()}<br>
+                        Images: ${progressData.totalImages} (will need to be reloaded)<br>
+                        Current Position: Image ${progressData.currentImageIndex + 1}<br>
+                        Responses: ${progressData.responses ? progressData.responses.length : 0} collected<br>
+                        <br><strong>Note:</strong> Images are not saved in browser storage. You'll need to reload them to continue.<br>
+                        <br>
+                        <button class="btn-success" onclick="continueFromSaved()">Continue This Session</button>
+                        <button class="btn-warning" onclick="startNewSession()" style="margin-left: 10px;">Start New Session Instead</button>
+                    `;
+                    showAlert('Found previous session! Note: You will need to reload images to continue.', 'info');
+                } catch (error) {
+                    console.error('Error parsing saved progress:', error);
+                    localStorage.removeItem('imageSurveyProgress');
+                }
+            }
+        }
+
+        // Continue from saved progress
+        function continueFromSaved() {
+            const savedProgress = localStorage.getItem('imageSurveyProgress');
+            if (!savedProgress) {
+                showAlert('No saved progress found.', 'warning');
+                return;
+            }
+
+            try {
+                const progressData = JSON.parse(savedProgress);
+                
+                // Restore session data
+                sessionId = progressData.sessionId;
+                currentImageIndex = progressData.currentImageIndex;
+                currentIteration = progressData.currentIteration;
+                responses = progressData.responses || [];
+                // Image data URLs are not saved to localStorage to avoid storage limits
+                imageDataUrls = progressData.imageDataUrls || [];
+                
+                // Recreate image files info
+                imageFiles = progressData.imageFiles ? progressData.imageFiles.map(fileInfo => ({
+                    name: fileInfo.name,
+                    size: fileInfo.size,
+                    type: fileInfo.type
+                })) : [];
+
+                if (imageDataUrls.length === 0) {
+                    // Images need to be reloaded - show image upload section
+                    // Store session data temporarily so we can restore it after images load
+                    window.pendingSessionRestore = {
+                        sessionId: sessionId,
+                        currentImageIndex: currentImageIndex,
+                        currentIteration: currentIteration,
+                        responses: responses
+                    };
+                    document.getElementById('setup-section').classList.remove('hidden');
+                    showAlert('Session found, but images need to be reloaded. Please select the same images again.', 'warning');
+                    updateSessionInfo();
+                    return;
+                }
+
+                // Images are available - start survey from saved position
+                startSurveyFromSaved();
+                showAlert(`Session restored! Continuing from Image ${currentImageIndex + 1}`, 'success');
+                
+            } catch (error) {
+                console.error('Error restoring progress:', error);
+                showAlert('Error restoring session. Please start fresh.', 'warning');
+                clearProgress();
+                // Show image upload section if error occurs
+                document.getElementById('setup-section').classList.remove('hidden');
+            }
+        }
+
+        // Start survey from saved state
+        function startSurveyFromSaved() {
+            surveyStarted = true;
+            
+            // Show appropriate sections
+            document.getElementById('load-progress-section').classList.add('hidden');
+            document.getElementById('setup-section').classList.add('hidden');
+            document.getElementById('save-load-controls').classList.remove('hidden');
+            document.getElementById('progress').classList.remove('hidden');
+            document.getElementById('survey-section').classList.remove('hidden');
+            
+            // Setup and update display
+            setupEventListeners();
+            updateDisplay();
+            
+            // Try to restore form state from localStorage
+            try {
+                const savedProgress = localStorage.getItem('imageSurveyProgress');
+                if (savedProgress) {
+                    const progressData = JSON.parse(savedProgress);
+                    if (progressData.currentFormState) {
+                        restoreFormState(progressData.currentFormState);
+                    }
+                }
+            } catch (error) {
+                console.error('Error restoring form state:', error);
+            }
+            
+            updateSessionInfo();
+            startAutoSave();
+        }
+
+        // Load images from file input
+        function loadImages() {
+            const fileInput = document.getElementById('image-files');
+            const files = fileInput.files;
+            
+            if (files.length === 0) {
+                showAlert('Please select at least one file.', 'warning');
+                return;
+            }
+            
+            imageFiles = Array.from(files);
+            imageDataUrls = [];
+            fileTypes = [];
+            
+            let filesProcessed = 0;
+            const imagesList = document.getElementById('loaded-images-list');
+            imagesList.innerHTML = '';
+            
+            // Process each file
+            imageFiles.forEach((file, index) => {
+                const reader = new FileReader();
+                
+                // Determine file type
+                const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+                fileTypes[index] = isPdf ? 'pdf' : 'image';
+                
+                reader.onload = function(e) {
+                    imageDataUrls[index] = e.target.result;
+                    
+                    // Add to display list
+                    const listItem = document.createElement('li');
+                    const typeLabel = isPdf ? '📄 PDF' : '🖼️ Image';
+                    listItem.textContent = `${index + 1}. ${file.name} (${typeLabel})`;
+                    imagesList.appendChild(listItem);
+                    
+                    filesProcessed++;
+                    
+                    // When all files are processed
+                    if (filesProcessed === imageFiles.length) {
+                        document.getElementById('image-list').classList.remove('hidden');
+                        
+                        // Verify we have all the image data URLs
+                        if (imageDataUrls.length === imageFiles.length) {
+                            // Don't auto-save - user must manually save to avoid storage issues
+                            
+                            // Check if we have a pending session restore (from continueFromSaved)
+                            if (window.pendingSessionRestore) {
+                                // Restore the session data
+                                sessionId = window.pendingSessionRestore.sessionId;
+                                currentImageIndex = window.pendingSessionRestore.currentImageIndex;
+                                currentIteration = window.pendingSessionRestore.currentIteration;
+                                responses = window.pendingSessionRestore.responses;
+                                delete window.pendingSessionRestore;
+                                
+                                // Auto-continue from saved position
+                                showAlert(`Successfully loaded ${imageFiles.length} images! Restoring session...`, 'success');
+                                setTimeout(() => {
+                                    startSurveyFromSaved();
+                                }, 1000);
+                            } else if (!loadingForSessionFile) {
+                                // New session - auto-start
+                                showAlert(`Successfully loaded ${imageFiles.length} images! Starting survey...`, 'success');
+                                
+                                // Automatically start the survey after a brief delay to ensure UI updates
+                                setTimeout(() => {
+                                    startSurvey();
+                                }, 1000);
+                            } else {
+                                // Loading for session file - wait for user to click Apply
+                                showAlert(`Successfully loaded ${imageFiles.length} images! Now click "Apply This Session" to continue.`, 'success');
+                            }
+                        } else {
+                            showAlert('Error: Not all images loaded successfully. Please try again.', 'warning');
+                        }
+                    }
+                };
+                
+                reader.onerror = function() {
+                    showAlert(`Error loading ${file.name}`, 'warning');
+                    filesProcessed++;
+                };
+                
+                reader.readAsDataURL(file);
+            });
+        }
+
+        // Start the survey
+        function startSurvey() {
+            if (imageDataUrls.length === 0) {
+                showAlert('Please load images first.', 'warning');
+                return;
+            }
+            
+            surveyStarted = true;
+            currentImageIndex = 0;
+            currentIteration = 1;
+            
+            // Hide setup, show survey
+            document.getElementById('load-progress-section').classList.add('hidden');
+            document.getElementById('setup-section').classList.add('hidden');
+            document.getElementById('save-load-controls').classList.remove('hidden');
+            document.getElementById('progress').classList.remove('hidden');
+            document.getElementById('survey-section').classList.remove('hidden');
+            
+            // Clear form for fresh start
+            clearForm();
+            
+            // Setup event listeners
+            setupEventListeners();
+            updateDisplay();
+            updateSessionInfo();
+            
+            // Auto-save disabled to avoid storage issues
+            startAutoSave();
+            
+            // Don't auto-save - user must manually save
+            // saveProgress();
+            
+            showAlert('Survey started! Use "Save Progress Now" button to save your position.', 'success');
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            // Add event listeners for Question 1 to show/hide conditional questions
+            const dataRequestCheckboxes = document.querySelectorAll('input[name="data_request"]');
+            dataRequestCheckboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', handleDataRequestChange);
+            });
+            
+            // Initialize visibility based on current state
+            handleDataRequestChange();
+        }
+        
+        // Handle Question 1 change - show/hide conditional questions
+        function handleDataRequestChange() {
+            const dataRequestCheckboxes = document.querySelectorAll('input[name="data_request"]:checked');
+            const conditionalQuestions = document.getElementById('conditional-questions');
+            
+            // Check if "No" is selected
+            const noSelected = Array.from(dataRequestCheckboxes).some(cb => cb.value === 'No');
+            
+            if (noSelected) {
+                // Hide questions 2-15
+                conditionalQuestions.classList.add('hidden-conditional');
+            } else {
+                // Show questions 2-15 (including when nothing is selected yet)
+                conditionalQuestions.classList.remove('hidden-conditional');
+            }
+        }
+
+        // Update display
+        function updateDisplay() {
+            if (!surveyStarted || imageDataUrls.length === 0) return;
+            
+            // Update image or PDF display
+            const imageElement = document.getElementById('current-image');
+            const pdfElement = document.getElementById('current-pdf');
+            const pdfFallback = document.getElementById('pdf-fallback');
+            const pdfNewTabLink = document.getElementById('pdf-new-tab-link');
+            const currentFileType = fileTypes[currentImageIndex] || 'image';
+            
+            if (currentFileType === 'pdf') {
+                // Show PDF, hide image
+                imageElement.style.display = 'none';
+                pdfElement.style.display = 'block';
+                pdfFallback.style.display = 'block';
+                pdfElement.src = imageDataUrls[currentImageIndex];
+                
+                // Create blob URL for opening PDF in new tab (works better than data URL)
+                // Check if we have the original file object available
+                if (imageFiles[currentImageIndex] && imageFiles[currentImageIndex] instanceof File) {
+                    const pdfBlobUrl = URL.createObjectURL(imageFiles[currentImageIndex]);
+                    pdfNewTabLink.href = pdfBlobUrl;
+                } else {
+                    // Fallback to data URL if file object not available
+                    pdfNewTabLink.href = imageDataUrls[currentImageIndex];
+                }
+            } else {
+                // Show image, hide PDF and fallback
+                imageElement.style.display = 'block';
+                pdfElement.style.display = 'none';
+                pdfFallback.style.display = 'none';
+                imageElement.src = imageDataUrls[currentImageIndex];
+            }
+            
+            // Update titles
+            const fileTypeLabel = currentFileType === 'pdf' ? 'PDF' : 'Image';
+            document.getElementById('image-title').textContent = 
+                `${fileTypeLabel} ${currentImageIndex + 1} - Response Set ${currentIteration}`;
+	    document.getElementById('file-name').textContent = imageFiles[currentImageIndex] ? imageFiles[currentImageIndex].name : `File_${currentImageIndex + 1}`;
+
+            
+            // Update progress
+            const progressPercent = ((currentImageIndex / imageDataUrls.length) * 100).toFixed(1);
+            document.getElementById('progress-text').textContent = 
+                `File ${currentImageIndex + 1} of ${imageDataUrls.length}, Response Set ${currentIteration}`;
+            
+            document.getElementById('completion-stats').textContent = 
+                `${progressPercent}% Complete • ${responses.length} responses collected`;
+            
+            document.getElementById('progress-fill').style.width = `${progressPercent}%`;
+            
+            // Update navigation buttons
+            document.getElementById('prev-btn').disabled = currentImageIndex === 0;
+            
+            // Update session info
+            updateSessionInfo();
+        }
+
+        // Update session information display
+        function updateSessionInfo() {
+            const sessionInfo = document.getElementById('current-session-info');
+            if (sessionInfo) {
+                const pdfCount = fileTypes.filter(t => t === 'pdf').length;
+                const imageCount = fileTypes.filter(t => t === 'image').length;
+                sessionInfo.innerHTML = `
+                    Session ID: ${sessionId}<br>
+                    Started: ${new Date().toLocaleString()}<br>
+                    Files Loaded: ${imageDataUrls.length} (${imageCount} images, ${pdfCount} PDFs)<br>
+                    Current Position: File ${currentImageIndex + 1}<br>
+                    Responses Collected: ${responses.length}<br>
+                    <strong>Save Status:</strong> Manual save only (click "Save Progress Now" to save)
+                `;
+            }
+        }
+
+        // Auto-save functionality - DISABLED to avoid storage issues
+        function startAutoSave() {
+            // Auto-save disabled - user must manually save
+            // This prevents storage full errors with many images
+        }
+
+        function stopAutoSave() {
+            // Auto-save disabled
+        }
+
+        // Save progress to localStorage (without image data to avoid storage limits)
+        function saveProgress(silent = false) {
+            const progressData = {
+                sessionId: sessionId,
+                timestamp: Date.now(),
+                currentImageIndex: currentImageIndex,
+                currentIteration: currentIteration,
+                responses: responses,
+                // Don't save imageDataUrls to localStorage - they take too much space
+                // Images will need to be reloaded when continuing from saved progress
+                totalImages: imageDataUrls.length,
+                imageFiles: imageFiles.map(file => ({
+                    name: file.name,
+                    size: file.size,
+                    type: file.type
+                })),
+                // Save current form state
+                currentFormState: getCurrentFormState(),
+                note: "Image data not saved to browser storage. Export session file to save images."
+            };
+            
+            try {
+                localStorage.setItem('imageSurveyProgress', JSON.stringify(progressData));
+                
+                if (!silent) {
+                    showAutoSaveIndicator('✓ Progress Saved');
+                    updateSessionInfo();
+                }
+            } catch (error) {
+                console.error('Error saving progress:', error);
+                if (!silent) {
+                    showAlert('Error saving progress. Storage may be full.', 'warning');
+                }
+            }
+        }
+
+        // Get current form state
+        function getCurrentFormState() {
+            const dataRequestCheckboxes = document.querySelectorAll('input[name="data_request"]:checked');
+            const dataPointsProvided = document.getElementById('data_points_provided').value.trim();
+            const granularityCheckboxes = document.querySelectorAll('input[name="granularity_match"]:checked');
+            const attributeMatchCheckboxes = document.querySelectorAll('input[name="attribute_match"]:checked');
+            const temporalGranularityCheckboxes = document.querySelectorAll('input[name="temporal_granularity"]:checked');
+            const temporalCoverageCheckboxes = document.querySelectorAll('input[name="temporal_coverage"]:checked');
+            const baselineShiftCheckboxes = document.querySelectorAll('input[name="baseline_shift"]:checked');
+            const variableRedefinedCheckboxes = document.querySelectorAll('input[name="variable_redefined"]:checked');
+            const allVariablesCheckboxes = document.querySelectorAll('input[name="all_variables"]:checked');
+            const whatChanged = document.getElementById('what_changed').value.trim();
+            const allPartsCheckboxes = document.querySelectorAll('input[name="all_parts"]:checked');
+            const thematicAnswerCheckboxes = document.querySelectorAll('input[name="thematic_answer"]:checked');
+            const justificationCheckboxes = document.querySelectorAll('input[name="justification"]:checked');
+            const otherNotes = document.getElementById('other_notes').value.trim();
+            const pqTopic = document.getElementById('pq_topic').value.trim();
+            
+            return {
+                dataRequest: Array.from(dataRequestCheckboxes).map(cb => cb.value),
+                dataPointsProvided: dataPointsProvided || '',
+                granularityMatch: Array.from(granularityCheckboxes).map(cb => cb.value),
+                attributeMatch: Array.from(attributeMatchCheckboxes).map(cb => cb.value),
+                temporalGranularity: Array.from(temporalGranularityCheckboxes).map(cb => cb.value),
+                temporalCoverage: Array.from(temporalCoverageCheckboxes).map(cb => cb.value),
+                baselineShift: Array.from(baselineShiftCheckboxes).map(cb => cb.value),
+                variableRedefined: Array.from(variableRedefinedCheckboxes).map(cb => cb.value),
+                allVariables: Array.from(allVariablesCheckboxes).map(cb => cb.value),
+                whatChanged: whatChanged || '',
+                allParts: Array.from(allPartsCheckboxes).map(cb => cb.value),
+                thematicAnswer: Array.from(thematicAnswerCheckboxes).map(cb => cb.value),
+                justification: Array.from(justificationCheckboxes).map(cb => cb.value),
+                otherNotes: otherNotes || '',
+                pqTopic: pqTopic || ''
+            };
+        }
+
+        // Restore form state
+        function restoreFormState(formState) {
+            if (!formState) return;
+            
+            if (formState.dataRequest && formState.dataRequest.length > 0) {
+                formState.dataRequest.forEach(value => {
+                    const checkbox = document.querySelector(`input[name="data_request"][value="${value}"]`);
+                    if (checkbox) checkbox.checked = true;
+                });
+            }
+            
+            if (formState.dataPointsProvided) {
+                document.getElementById('data_points_provided').value = formState.dataPointsProvided;
+            }
+            
+            if (formState.granularityMatch && formState.granularityMatch.length > 0) {
+                formState.granularityMatch.forEach(value => {
+                    const checkbox = document.querySelector(`input[name="granularity_match"][value="${value}"]`);
+                    if (checkbox) checkbox.checked = true;
+                });
+            }
+
+            if (formState.attributeMatch && formState.attributeMatch.length > 0) {
+                formState.attributeMatch.forEach(value => {
+                    const checkbox = document.querySelector(`input[name="attribute_match"][value="${value}"]`);
+                    if (checkbox) checkbox.checked = true;
+                });
+            }
+            
+            if (formState.temporalGranularity && formState.temporalGranularity.length > 0) {
+                formState.temporalGranularity.forEach(value => {
+                    const checkbox = document.querySelector(`input[name="temporal_granularity"][value="${value}"]`);
+                    if (checkbox) checkbox.checked = true;
+                });
+            }
+            
+            if (formState.temporalCoverage && formState.temporalCoverage.length > 0) {
+                formState.temporalCoverage.forEach(value => {
+                    const checkbox = document.querySelector(`input[name="temporal_coverage"][value="${value}"]`);
+                    if (checkbox) checkbox.checked = true;
+                });
+            }
+            
+            if (formState.baselineShift && formState.baselineShift.length > 0) {
+                formState.baselineShift.forEach(value => {
+                    const checkbox = document.querySelector(`input[name="baseline_shift"][value="${value}"]`);
+                    if (checkbox) checkbox.checked = true;
+                });
+            }
+            
+            if (formState.variableRedefined && formState.variableRedefined.length > 0) {
+                formState.variableRedefined.forEach(value => {
+                    const checkbox = document.querySelector(`input[name="variable_redefined"][value="${value}"]`);
+                    if (checkbox) checkbox.checked = true;
+                });
+            }
+            
+            if (formState.allVariables && formState.allVariables.length > 0) {
+                formState.allVariables.forEach(value => {
+                    const checkbox = document.querySelector(`input[name="all_variables"][value="${value}"]`);
+                    if (checkbox) checkbox.checked = true;
+                });
+            }
+            
+            if (formState.whatChanged) {
+                document.getElementById('what_changed').value = formState.whatChanged;
+            }
+            
+            if (formState.allParts && formState.allParts.length > 0) {
+                formState.allParts.forEach(value => {
+                    const checkbox = document.querySelector(`input[name="all_parts"][value="${value}"]`);
+                    if (checkbox) checkbox.checked = true;
+                });
+            }
+            
+            if (formState.thematicAnswer && formState.thematicAnswer.length > 0) {
+                formState.thematicAnswer.forEach(value => {
+                    const checkbox = document.querySelector(`input[name="thematic_answer"][value="${value}"]`);
+                    if (checkbox) checkbox.checked = true;
+                });
+            }
+            
+            if (formState.justification && formState.justification.length > 0) {
+                formState.justification.forEach(value => {
+                    const checkbox = document.querySelector(`input[name="justification"][value="${value}"]`);
+                    if (checkbox) checkbox.checked = true;
+                });
+            }
+            
+            if (formState.otherNotes) {
+                document.getElementById('other_notes').value = formState.otherNotes;
+            }
+
+            if (formState.pqTopic) {
+                document.getElementById('pq_topic').value = formState.pqTopic;
+            }
+        }
+
+        // Manual save progress
+        function saveProgressManual() {
+            saveProgress();
+            showAlert('Progress saved manually!', 'success');
+        }
+
+        // Export session as file
+        function exportSession() {
+            const progressData = {
+                sessionId: sessionId,
+                timestamp: Date.now(),
+                currentImageIndex: currentImageIndex,
+                currentIteration: currentIteration,
+                responses: responses,
+                totalImages: imageDataUrls.length,
+                imageFiles: imageFiles.map(file => ({
+                    name: file.name,
+                    size: file.size,
+                    type: file.type
+                })),
+                // Include image data URLs so images can be restored automatically
+                imageDataUrls: imageDataUrls,
+                // Include file types (image vs pdf)
+                fileTypes: fileTypes,
+                // Include current form state if available
+                currentFormState: getCurrentFormState(),
+                note: "This file contains all image/PDF data. You can continue directly without reloading files."
+            };
+            
+            const dataStr = JSON.stringify(progressData, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(dataBlob);
+            link.download = `survey_session_${sessionId}_${new Date().toISOString().slice(0, 10)}.json`;
+            link.click();
+            
+            showAlert('Session exported! All images are included and will be restored automatically.', 'success');
+        }
+
+        // Load progress from file
+        function loadProgress() {
+            const fileInput = document.getElementById('progress-file');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                showAlert('Please select a session file.', 'warning');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const progressData = JSON.parse(e.target.result);
+                    
+                    // Validate the file
+                    if (!progressData.sessionId || !progressData.responses) {
+                        throw new Error('Invalid session file format');
+                    }
+                    
+                    // Restore data
+                    sessionId = progressData.sessionId;
+                    currentImageIndex = progressData.currentImageIndex || 0;
+                    currentIteration = progressData.currentIteration || 1;
+                    responses = progressData.responses || [];
+                    
+                    // Check if image data URLs are included in the session file
+                    if (progressData.imageDataUrls && progressData.imageDataUrls.length > 0) {
+                        // Images are included - restore them automatically
+                        imageDataUrls = progressData.imageDataUrls;
+                        fileTypes = progressData.fileTypes || [];
+                        imageFiles = progressData.imageFiles ? progressData.imageFiles.map(fileInfo => ({
+                            name: fileInfo.name,
+                            size: fileInfo.size,
+                            type: fileInfo.type
+                        })) : [];
+                        
+                        // If fileTypes not saved, derive from file info
+                        if (fileTypes.length === 0 && imageFiles.length > 0) {
+                            fileTypes = imageFiles.map(file => 
+                                file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf') ? 'pdf' : 'image'
+                            );
+                        }
+                        
+                        // Store form state for restoration after applying
+                        if (progressData.currentFormState) {
+                            window.pendingFormState = progressData.currentFormState;
+                        }
+                        
+                        // Hide image upload section since images are already loaded
+                        document.getElementById('setup-section').classList.add('hidden');
+                        
+                        // Show session info with auto-continue option
+                        document.getElementById('progress-info').classList.remove('hidden');
+                        document.getElementById('session-details').innerHTML = `
+                            Session ID: ${progressData.sessionId}<br>
+                            Original Date: ${new Date(progressData.timestamp).toLocaleString()}<br>
+                            Images: ${progressData.totalImages} (restored from file)<br>
+                            Position: Image ${currentImageIndex + 1} of ${progressData.totalImages}<br>
+                            Responses: ${responses.length} collected<br>
+                            <br><strong>All images have been restored!</strong><br>
+                            <button class="btn-success" onclick="applyLoadedProgress()" style="margin-top: 10px;">Continue This Session</button>
+                        `;
+                        
+                        showAlert('Session file loaded! All images restored. Click "Continue This Session" to proceed.', 'success');
+                    } else {
+                        // Images not included - user needs to load them
+                        imageDataUrls = [];
+                        imageFiles = [];
+                        
+                        // Hide image upload section - user will need to load images before applying
+                        document.getElementById('setup-section').classList.add('hidden');
+                        
+                        // Show session info
+                        document.getElementById('progress-info').classList.remove('hidden');
+                        document.getElementById('session-details').innerHTML = `
+                            Session ID: ${progressData.sessionId}<br>
+                            Original Date: ${new Date(progressData.timestamp).toLocaleString()}<br>
+                            Images Expected: ${progressData.totalImages}<br>
+                            Position: Image ${currentImageIndex + 1}<br>
+                            Responses: ${responses.length} collected<br>
+                            <br><strong>Note:</strong> This session file doesn't include image data. You need to reload the same ${progressData.totalImages} images to continue.<br>
+                            <button class="btn-primary" onclick="showImageUploadForSession()" style="margin-top: 10px;">Load Images</button>
+                            <button class="btn-success" onclick="applyLoadedProgress()" style="margin-top: 10px; margin-left: 10px;">Apply This Session</button>
+                        `;
+                        
+                        showAlert('Session file loaded! Click "Load Images" to reload the images, then click "Apply This Session".', 'success');
+                    }
+                    
+                } catch (error) {
+                    console.error('Error loading session:', error);
+                    showAlert('Error reading session file. Please check the file format.', 'warning');
+                    // Show image upload section if error occurs
+                    document.getElementById('setup-section').classList.remove('hidden');
+                }
+            };
+            
+            reader.readAsText(file);
+        }
+
+        // Show image upload section for session file loading
+        function showImageUploadForSession() {
+            loadingForSessionFile = true; // Set flag to prevent auto-start
+            document.getElementById('setup-section').classList.remove('hidden');
+            showAlert('Please load the same images that were used in this session.', 'info');
+        }
+
+        // Apply loaded progress
+        function applyLoadedProgress() {
+            if (imageDataUrls.length === 0) {
+                showAlert('Please load images first before applying the session. Click "Load Images" button.', 'warning');
+                return;
+            }
+            
+            // Reset the flag
+            loadingForSessionFile = false;
+            
+            // Don't auto-save - user can manually save if needed
+            // saveProgress();
+            startSurveyFromSaved();
+            
+            // Restore form state if it was saved in the session file
+            if (window.pendingFormState) {
+                restoreFormState(window.pendingFormState);
+                delete window.pendingFormState;
+            }
+            
+            showAlert('Session applied! Continuing from saved position.', 'success');
+        }
+
+        // Clear saved progress
+        function clearProgress() {
+            if (confirm('Are you sure you want to clear all saved progress? This cannot be undone.')) {
+                localStorage.removeItem('imageSurveyProgress');
+                stopAutoSave();
+                showAlert('Saved progress cleared.', 'info');
+                
+                // Reset UI
+                document.getElementById('progress-info').classList.add('hidden');
+                updateSessionInfo();
+            }
+        }
+
+        // Show auto-save indicator
+        function showAutoSaveIndicator(message) {
+            const indicator = document.getElementById('auto-save-indicator');
+            indicator.textContent = message;
+            indicator.classList.remove('hidden', 'saving');
+            
+            setTimeout(() => {
+                indicator.classList.add('hidden');
+            }, 2000);
+        }
+
+        // Navigation functions
+        function goToPreviousImage() {
+            if (currentImageIndex > 0) {
+                // Save current response if any
+                const formData = getFormData();
+                if (formData) {
+                    responses.push(formData);
+                }
+                
+                    currentImageIndex--;
+                    currentIteration = 1;
+                    clearForm();
+                    updateDisplay();
+                    // Don't auto-save - user must manually save
+                    showAlert('Moved to previous file.', 'info');
+            }
+        }
+
+        function jumpToImage() {
+            const targetImage = prompt(`Enter file number (1-${imageDataUrls.length}):`);
+            if (targetImage) {
+                const imageNum = parseInt(targetImage);
+                if (imageNum >= 1 && imageNum <= imageDataUrls.length) {
+                    // Save current response if any
+                    const formData = getFormData();
+                    if (formData) {
+                        responses.push(formData);
+                    }
+                    
+                    currentImageIndex = imageNum - 1;
+                    currentIteration = 1;
+                    clearForm();
+                    updateDisplay();
+                    showAlert(`Jumped to file ${imageNum}.`, 'info');
+                } else {
+                    showAlert('Invalid file number.', 'warning');
+                }
+            }
+        }
+
+        // Repeat current image
+        function repeatImage() {
+            const formData = getFormData();
+            if (formData) {
+                responses.push(formData);
+                currentIteration++;
+                clearForm();
+                updateDisplay();
+                // Don't auto-save - user must manually save
+                showAlert(`Starting iteration ${currentIteration} for this file.`, 'info');
+            } else {
+                showAlert('Please fill out the form before repeating.', 'warning');
+            }
+        }
+
+        // Move to next image
+        function nextImage() {
+            const formData = getFormData();
+            if (formData) {
+                responses.push(formData);
+                
+                if (currentImageIndex < imageDataUrls.length - 1) {
+                    currentImageIndex++;
+                    currentIteration = 1;
+                    clearForm();
+                    updateDisplay();
+                    // Don't auto-save - user must manually save
+                    showAlert('Moved to next file.', 'info');
+                } else {
+                    // Last image - finish survey
+                    finishSurvey();
+                }
+            } else {
+                showAlert('Please fill out the form before continuing.', 'warning');
+            }
+        }
+
+        // Get form data - MODIFIED FOR UPDATED QUESTIONS
+        function getFormData() {
+            // Question 1: Data request (required)
+            const dataRequestCheckboxes = document.querySelectorAll('input[name="data_request"]:checked');
+            if (dataRequestCheckboxes.length === 0) {
+                showAlert('Please answer question 1 about data request.', 'warning');
+                return null;
+            }
+
+            const dataRequest = Array.from(dataRequestCheckboxes).map(cb => cb.value).join('; ');
+            const hasNoDataRequest = Array.from(dataRequestCheckboxes).some(cb => cb.value === 'No');
+
+            // If no data request, only collect Question 1 and questions 14-15
+            if (hasNoDataRequest) {
+                const otherNotes = document.getElementById('other_notes').value.trim();
+                const pqTopic = document.getElementById('pq_topic').value.trim();
+                return {
+                    sessionId: sessionId,
+                    imageIndex: currentImageIndex,
+                    fileName: imageFiles[currentImageIndex] ? imageFiles[currentImageIndex].name : `File_${currentImageIndex + 1}`,
+                    fileType: fileTypes[currentImageIndex] || 'unknown',
+                    iteration: currentIteration,
+                    timestamp: new Date().toISOString(),
+                    dataRequest: dataRequest,
+                    // All other fields N/A when no data request
+                    dataPointsProvided: 'N/A',
+                    allVariables: 'N/A',
+                    granularityMatch: 'N/A',
+                    attributeMatch: 'N/A',
+                    temporalGranularity: 'N/A',
+                    temporalCoverage: 'N/A',
+                    baselineShift: 'N/A',
+                    variableRedefined: 'N/A',
+                    whatChanged: 'N/A',
+                    allParts: 'N/A',
+                    thematicAnswer: 'N/A',
+                    justification: 'N/A',
+                    otherNotes: otherNotes || '',
+                    pqTopic: pqTopic || ''
+                };
+            }
+
+            // For data requests, validate and collect all questions
+            const dataPointsProvided = document.getElementById('data_points_provided').value.trim();
+
+            const allVariablesCheckboxes = document.querySelectorAll('input[name="all_variables"]:checked');
+            if (allVariablesCheckboxes.length === 0) {
+                showAlert('Please answer question 3 about all requested variables.', 'warning');
+                return null;
+            }
+
+            const granularityCheckboxes = document.querySelectorAll('input[name="granularity_match"]:checked');
+            if (granularityCheckboxes.length === 0) {
+                showAlert('Please answer question 4 about granularity match.', 'warning');
+                return null;
+            }
+
+            const attributeMatchCheckboxes = document.querySelectorAll('input[name="attribute_match"]:checked');
+            if (attributeMatchCheckboxes.length === 0) {
+                showAlert('Please answer question 5 about attribute match.', 'warning');
+                return null;
+            }
+
+            const temporalGranularityCheckboxes = document.querySelectorAll('input[name="temporal_granularity"]:checked');
+            if (temporalGranularityCheckboxes.length === 0) {
+                showAlert('Please answer question 6 about temporal granularity.', 'warning');
+                return null;
+            }
+
+            const temporalCoverageCheckboxes = document.querySelectorAll('input[name="temporal_coverage"]:checked');
+            if (temporalCoverageCheckboxes.length === 0) {
+                showAlert('Please answer question 7 about temporal coverage.', 'warning');
+                return null;
+            }
+
+            const baselineShiftCheckboxes = document.querySelectorAll('input[name="baseline_shift"]:checked');
+            if (baselineShiftCheckboxes.length === 0) {
+                showAlert('Please answer question 8 about comparative statistic.', 'warning');
+                return null;
+            }
+
+            const variableRedefinedCheckboxes = document.querySelectorAll('input[name="variable_redefined"]:checked');
+            if (variableRedefinedCheckboxes.length === 0) {
+                showAlert('Please answer question 9 about variable redefinition.', 'warning');
+                return null;
+            }
+
+            const whatChanged = document.getElementById('what_changed').value.trim();
+
+            const allPartsCheckboxes = document.querySelectorAll('input[name="all_parts"]:checked');
+            if (allPartsCheckboxes.length === 0) {
+                showAlert('Please answer question 11 about all parts answered.', 'warning');
+                return null;
+            }
+
+            const thematicAnswerCheckboxes = document.querySelectorAll('input[name="thematic_answer"]:checked');
+            if (thematicAnswerCheckboxes.length === 0) {
+                showAlert('Please answer question 12 about thematic answer.', 'warning');
+                return null;
+            }
+
+            const justificationCheckboxes = document.querySelectorAll('input[name="justification"]:checked');
+            if (justificationCheckboxes.length === 0) {
+                showAlert('Please answer question 13 about justification.', 'warning');
+                return null;
+            }
+
+            const otherNotes = document.getElementById('other_notes').value.trim();
+            const pqTopic = document.getElementById('pq_topic').value.trim();
+
+            return {
+                sessionId: sessionId,
+                imageIndex: currentImageIndex,
+                fileName: imageFiles[currentImageIndex] ? imageFiles[currentImageIndex].name : `File_${currentImageIndex + 1}`,
+                fileType: fileTypes[currentImageIndex] || 'unknown',
+                iteration: currentIteration,
+                timestamp: new Date().toISOString(),
+                dataRequest: dataRequest,
+                dataPointsProvided: dataPointsProvided || '',
+                allVariables: Array.from(allVariablesCheckboxes).map(cb => cb.value).join('; '),
+                granularityMatch: Array.from(granularityCheckboxes).map(cb => cb.value).join('; '),
+                attributeMatch: Array.from(attributeMatchCheckboxes).map(cb => cb.value).join('; '),
+                temporalGranularity: Array.from(temporalGranularityCheckboxes).map(cb => cb.value).join('; '),
+                temporalCoverage: Array.from(temporalCoverageCheckboxes).map(cb => cb.value).join('; '),
+                baselineShift: Array.from(baselineShiftCheckboxes).map(cb => cb.value).join('; '),
+                variableRedefined: Array.from(variableRedefinedCheckboxes).map(cb => cb.value).join('; '),
+                whatChanged: whatChanged || '',
+                allParts: Array.from(allPartsCheckboxes).map(cb => cb.value).join('; '),
+                thematicAnswer: Array.from(thematicAnswerCheckboxes).map(cb => cb.value).join('; '),
+                justification: Array.from(justificationCheckboxes).map(cb => cb.value).join('; '),
+                otherNotes: otherNotes || '',
+                pqTopic: pqTopic || ''
+            };
+        }
+
+        // Clear form
+        function clearForm() {
+            // Clear all checkboxes
+            document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            
+            // Clear all text inputs
+            document.getElementById('data_points_provided').value = '';
+            document.getElementById('what_changed').value = '';
+            document.getElementById('other_notes').value = '';
+            document.getElementById('pq_topic').value = '';
+            
+            // Reset conditional questions visibility
+            handleDataRequestChange();
+        }
+
+        // Finish survey
+        function finishSurvey() {
+            const formData = getFormData();
+            if (formData) {
+                responses.push(formData);
+                
+                // Show results
+                document.getElementById('survey-section').classList.add('hidden');
+                document.getElementById('results-section').classList.remove('hidden');
+                document.getElementById('total-responses').textContent = responses.length;
+                
+                // Generate results table
+                generateResultsTable();
+                
+                // Clear saved progress since survey is complete
+                localStorage.removeItem('imageSurveyProgress');
+                stopAutoSave();
+                
+                showAlert(`Survey completed! Total responses: ${responses.length}`, 'success');
+            } else {
+                showAlert('Please fill out the form before finishing.', 'warning');
+            }
+        }
+
+        // Generate results table
+        function generateResultsTable() {
+            if (responses.length === 0) return;
+            
+            const tableContainer = document.getElementById('results-table');
+            const headers = Object.keys(responses[0]);
+            
+            let tableHTML = '<table><thead><tr>';
+            headers.forEach(header => {
+                tableHTML += `<th>${header}</th>`;
+            });
+            tableHTML += '</tr></thead><tbody>';
+            
+            responses.forEach(response => {
+                tableHTML += '<tr>';
+                headers.forEach(header => {
+                    const value = response[header] || '';
+                    tableHTML += `<td>${value}</td>`;
+                });
+                tableHTML += '</tr>';
+            });
+            
+            tableHTML += '</tbody></table>';
+            tableContainer.innerHTML = tableHTML;
+        }
+
+        // Download results as CSV
+        function downloadResults() {
+            if (responses.length === 0) {
+                showAlert('No responses to download.', 'warning');
+                return;
+            }
+            
+            const headers = Object.keys(responses[0]);
+            let csvContent = headers.join(',') + '\n';
+            
+            responses.forEach(response => {
+                const row = headers.map(header => {
+                    const value = response[header] || '';
+                    // Escape commas and quotes in CSV
+                    if (typeof value === 'string' && (value.includes(',') || value.includes('"') || value.includes('\n'))) {
+                        return '"' + value.replace(/"/g, '""') + '"';
+                    }
+                    return value;
+                });
+                csvContent += row.join(',') + '\n';
+            });
+            
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `survey_results_${sessionId}_${new Date().toISOString().slice(0, 10)}.csv`;
+            link.click();
+            
+            showAlert('Results downloaded as CSV!', 'success');
+        }
+
+        // Reset survey
+        function resetSurvey() {
+            if (confirm('Are you sure you want to reset? This will clear all responses and start over.')) {
+                // Reset all variables
+                currentImageIndex = 0;
+                currentIteration = 1;
+                responses = [];
+                
+                // Clear form
+                clearForm();
+                
+                // Show survey section
+                document.getElementById('results-section').classList.add('hidden');
+                document.getElementById('survey-section').classList.remove('hidden');
+                
+                // Update display
+                updateDisplay();
+                
+                // Clear saved progress
+                localStorage.removeItem('imageSurveyProgress');
+                
+                showAlert('Survey reset! Starting from the beginning.', 'info');
+            }
+        }
+
+        // Handle image loading error
+        function handleImageError() {
+            const currentImage = document.getElementById('current-image');
+            currentImage.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300"><rect width="400" height="300" fill="%23f0f0f0"/><text x="200" y="150" text-anchor="middle" font-family="Arial" font-size="16" fill="%23666">Image could not be loaded</text></svg>';
+            showAlert('Error loading image. Please check the file format.', 'warning');
+        }
+
+        // Utility function to show alerts
+        function showAlert(message, type = 'info') {
+            const alertContainer = document.getElementById('alert-container');
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type}`;
+            alert.textContent = message;
+            
+            alertContainer.appendChild(alert);
+            
+            // Auto-remove after 5 seconds
+            setTimeout(() => {
+                if (alert.parentNode) {
+                    alert.parentNode.removeChild(alert);
+                }
+            }, 5000);
+            
+            // Scroll to alert
+            alert.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+    </script>
+</body>
+</html>
