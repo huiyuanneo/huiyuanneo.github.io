@@ -471,7 +471,7 @@
                 
                 <!-- Question 4: Variable granularity difference -->
                 <div class="question-block">
-                    <label><strong>4. Was there a variable where the granularity of the data provided differed from that requested (e.g. national instead of state-level data)?</strong></label><br>
+                    <label><strong>4. Is there a variable where the granularity of the data provided differed from that requested (e.g. national instead of state-level data)?</strong></label><br>
                     <div class="checkbox-group">
                         <input type="checkbox" name="granularity_match" value="No, fully matched" id="fully_matched">
                         <label for="fully_matched">No, fully matched</label>
@@ -500,7 +500,7 @@
                 
                 <!-- Question 5: Temporal granularity difference -->
                 <div class="question-block">
-                    <label><strong>5. Was there a variable where the temporal granularity of the data provided differed from that requested (e.g. annual instead of monthly data)?</strong></label><br>
+                    <label><strong>5. Is there a variable where the temporal granularity of the data provided differed from that requested (e.g. annual instead of monthly data)?</strong></label><br>
                     <div class="checkbox-group">
                         <input type="checkbox" name="temporal_granularity" value="No, fully matched" id="temporal_fully_matched">
                         <label for="temporal_fully_matched">No, fully matched</label>
@@ -512,6 +512,10 @@
                     <div class="checkbox-group">
                         <input type="checkbox" name="temporal_granularity" value="Yes, provided less granular data" id="temporal_less_granular">
                         <label for="temporal_less_granular">Yes, provided less granular data</label>
+                    </div>
+					<div class="checkbox-group">
+                        <input type="checkbox" name="temporal_granularity" value="MP did not request for temporal breakdown" id="temporal_granularity_none">
+                        <label for="temporal_granularity_none">MP did not request for temporal breakdown</label>
                     </div>
                     <div class="checkbox-group">
                         <input type="checkbox" name="temporal_granularity" value="N.A." id="temporal_granularity_na">
@@ -550,14 +554,14 @@
                 
                 <!-- Question 7: Comparative statistic difference -->
                 <div class="question-block">
-                    <label><strong>7. Was there a variable where the comparative statistic of the data provided differed from that requested (e.g., providing percentage instead of absolute number, or different reference year)?</strong></label><br>
+                    <label><strong>7. Is there a variable where the comparative statistic of the data provided differed from that requested (e.g., providing percentage instead of absolute number, or different reference year)?</strong></label><br>
 		    <div class="checkbox-group">
-                        <input type="checkbox" name="baseline_shift" value="No, comparative statistic did not change" id="baseline_no">
-                        <label for="baseline_no">No, comparative statistic did not change</label>
+                        <input type="checkbox" name="baseline_shift" value="Comparative statistic did not change" id="baseline_no">
+                        <label for="baseline_no">Comparative statistic did not change</label>
                     </div>
                     <div class="checkbox-group">
-                        <input type="checkbox" name="baseline_shift" value="Yes, comparative statistic changed" id="baseline_yes">
-                        <label for="baseline_yes">Yes, comparative statistic changed</label>
+                        <input type="checkbox" name="baseline_shift" value="Comparative statistic changed" id="baseline_yes">
+                        <label for="baseline_yes">Comparative statistic changed</label>
                     </div>
                     <div class="checkbox-group">
                         <input type="checkbox" name="baseline_shift" value="N.A." id="baseline_na">
@@ -567,14 +571,14 @@
                 
                 <!-- Question 8: Variable redefinition -->
                 <div class="question-block">
-                    <label><strong>8. Was there a variable where the government redefined or reconceptualized the data or indicator in their answer? (e.g., MP asked for "poverty" but answer gives "low-income households")</strong></label><br>
+                    <label><strong>8. Is there a variable where the government redefined or reconceptualized the data or indicator in their answer? (e.g., MP asked for "poverty" but answer gives "low-income households")</strong></label><br>
                     <div class="checkbox-group">
                         <input type="checkbox" name="variable_redefined" value="No, variable definition matches" id="var_redef_no">
-                        <label for="var_redef_no">No, variable definition matches</label>
+                        <label for="var_redef_no">Variable definition matches</label>
                     </div>
                     <div class="checkbox-group">
                         <input type="checkbox" name="variable_redefined" value="Yes, variable definition does not match" id="var_redef_yes">
-                        <label for="var_redef_yes">Yes, variable definition does not match</label>
+                        <label for="var_redef_yes">Variable definition does not match</label>
                     </div>
                     <div class="checkbox-group">
                         <input type="checkbox" name="variable_redefined" value="N.A." id="var_redef_na">
