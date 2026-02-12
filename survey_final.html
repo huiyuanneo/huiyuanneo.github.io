@@ -709,6 +709,7 @@
         let sessionId = null;
         let autoSaveInterval = null;
         let loadingForSessionFile = false; // Flag to track if loading images for a session file
+        let editingResponseIndex = null; // Track if we're editing an existing response
 
         // Initialize on page load
         document.addEventListener('DOMContentLoaded', function() {
@@ -729,6 +730,7 @@
                 responses = [];
                 surveyStarted = false;
                 loadingForSessionFile = false;
+                editingResponseIndex = null;
                 if (window.pendingSessionRestore) {
                     delete window.pendingSessionRestore;
                 }
@@ -865,6 +867,14 @@
             setupEventListeners();
             updateDisplay();
             
+            // Check if there's an existing response for the current image
+            const existingResponseIndex = findLastResponseIndexForImage(currentImageIndex);
+            if (existingResponseIndex >= 0) {
+                editingResponseIndex = existingResponseIndex;
+            } else {
+                editingResponseIndex = null;
+            }
+            
             // Try to restore form state from localStorage
             try {
                 const savedProgress = localStorage.getItem('imageSurveyProgress');
@@ -978,6 +988,7 @@
             surveyStarted = true;
             currentImageIndex = 0;
             currentIteration = 1;
+            editingResponseIndex = null; // Not editing any existing response
             
             // Hide setup, show survey
             document.getElementById('load-progress-section').classList.add('hidden');
@@ -1029,6 +1040,180 @@
             } else {
                 // Show questions 2-15 (including when nothing is selected yet)
                 conditionalQuestions.classList.remove('hidden-conditional');
+            }
+        }
+
+        // Find the index of the last response for a given image
+        function findLastResponseIndexForImage(imageIndex) {
+            let lastIndex = -1;
+            for (let i = 0; i < responses.length; i++) {
+                if (responses[i].imageIndex === imageIndex) {
+                    lastIndex = i;
+                }
+            }
+            return lastIndex;
+        }
+
+        // Populate form from a response object
+        function populateFormFromResponse(response) {
+            if (!response) return;
+            
+            // Clear form first
+            clearForm();
+            
+            // Question 1: Data request
+            if (response.dataRequest) {
+                const values = response.dataRequest.split('; ');
+                values.forEach(value => {
+                    const checkbox = document.querySelector(`input[name="data_request"][value="${value}"]`);
+                    if (checkbox) checkbox.checked = true;
+                });
+            }
+            
+            // Handle conditional questions visibility
+            handleDataRequestChange();
+            
+            // If no data request, just set notes fields
+            if (response.dataRequest && response.dataRequest.includes('No')) {
+                if (response.otherNotes && response.otherNotes !== 'N/A') {
+                    document.getElementById('other_notes').value = response.otherNotes;
+                }
+                if (response.pqTopic && response.pqTopic !== 'N/A') {
+                    document.getElementById('pq_topic').value = response.pqTopic;
+                }
+                return;
+            }
+            
+            // Question 2: Data points provided
+            if (response.dataPointsProvided && response.dataPointsProvided !== 'N/A') {
+                document.getElementById('data_points_provided').value = response.dataPointsProvided;
+            }
+            
+            // Question 3: All variables
+            if (response.allVariables && response.allVariables !== 'N/A') {
+                const values = response.allVariables.split('; ');
+                values.forEach(value => {
+                    const checkbox = document.querySelector(`input[name="all_variables"][value="${value}"]`);
+                    if (checkbox) checkbox.checked = true;
+                });
+            }
+            
+            // Question 4: Granularity match
+            if (response.granularityMatch && response.granularityMatch !== 'N/A') {
+                const values = response.granularityMatch.split('; ');
+                values.forEach(value => {
+                    const checkbox = document.querySelector(`input[name="granularity_match"][value="${value}"]`);
+                    if (checkbox) checkbox.checked = true;
+                });
+            }
+            
+            // Question 5: Temporal granularity
+            if (response.temporalGranularity && response.temporalGranularity !== 'N/A') {
+                const values = response.temporalGranularity.split('; ');
+                values.forEach(value => {
+                    const checkbox = document.querySelector(`input[name="temporal_granularity"][value="${value}"]`);
+                    if (checkbox) checkbox.checked = true;
+                });
+            }
+            
+            // Question 6: Temporal coverage
+            if (response.temporalCoverage && response.temporalCoverage !== 'N/A') {
+                const values = response.temporalCoverage.split('; ');
+                values.forEach(value => {
+                    const checkbox = document.querySelector(`input[name="temporal_coverage"][value="${value}"]`);
+                    if (checkbox) checkbox.checked = true;
+                });
+            }
+            
+            // Question 7: Baseline shift
+            if (response.baselineShift && response.baselineShift !== 'N/A') {
+                const values = response.baselineShift.split('; ');
+                values.forEach(value => {
+                    const checkbox = document.querySelector(`input[name="baseline_shift"][value="${value}"]`);
+                    if (checkbox) checkbox.checked = true;
+                });
+            }
+            
+            // Question 8: Variable redefined
+            if (response.variableRedefined && response.variableRedefined !== 'N/A') {
+                const values = response.variableRedefined.split('; ');
+                values.forEach(value => {
+                    const checkbox = document.querySelector(`input[name="variable_redefined"][value="${value}"]`);
+                    if (checkbox) checkbox.checked = true;
+                });
+            }
+            
+            // Question 9: What changed
+            if (response.whatChanged && response.whatChanged !== 'N/A') {
+                document.getElementById('what_changed').value = response.whatChanged;
+            }
+            
+            // Question 10: All parts
+            if (response.allParts && response.allParts !== 'N/A') {
+                const values = response.allParts.split('; ');
+                values.forEach(value => {
+                    const checkbox = document.querySelector(`input[name="all_parts"][value="${value}"]`);
+                    if (checkbox) checkbox.checked = true;
+                });
+            }
+            
+            // Question 11: Thematic answer
+            if (response.thematicAnswer && response.thematicAnswer !== 'N/A') {
+                const values = response.thematicAnswer.split('; ');
+                values.forEach(value => {
+                    const checkbox = document.querySelector(`input[name="thematic_answer"][value="${value}"]`);
+                    if (checkbox) checkbox.checked = true;
+                });
+            }
+            
+            // Question 12: Justification
+            if (response.justification && response.justification !== 'N/A') {
+                const values = response.justification.split('; ');
+                values.forEach(value => {
+                    const checkbox = document.querySelector(`input[name="justification"][value="${value}"]`);
+                    if (checkbox) checkbox.checked = true;
+                });
+            }
+            
+            // Question 13: Other notes
+            if (response.otherNotes) {
+                document.getElementById('other_notes').value = response.otherNotes;
+            }
+            
+            // Question 14: PQ Topic
+            if (response.pqTopic) {
+                document.getElementById('pq_topic').value = response.pqTopic;
+            }
+        }
+
+        // Save current response - updates existing if editing, otherwise pushes new
+        function saveCurrentResponse() {
+            const formData = getFormData();
+            if (formData) {
+                if (editingResponseIndex !== null && editingResponseIndex >= 0) {
+                    // Update existing response
+                    responses[editingResponseIndex] = formData;
+                } else {
+                    // Push new response
+                    responses.push(formData);
+                }
+            }
+            editingResponseIndex = null;
+        }
+
+        // Load existing response for current image if available
+        function loadExistingResponseForCurrentImage() {
+            const existingResponseIndex = findLastResponseIndexForImage(currentImageIndex);
+            if (existingResponseIndex >= 0) {
+                editingResponseIndex = existingResponseIndex;
+                const existingResponse = responses[existingResponseIndex];
+                currentIteration = existingResponse.iteration;
+                populateFormFromResponse(existingResponse);
+                return true;
+            } else {
+                editingResponseIndex = null;
+                clearForm();
+                return false;
             }
         }
 
@@ -1477,18 +1662,21 @@
         // Navigation functions
         function goToPreviousImage() {
             if (currentImageIndex > 0) {
-                // Save current response if any
-                const formData = getFormData();
-                if (formData) {
-                    responses.push(formData);
-                }
+                // Save current response (update existing or push new)
+                saveCurrentResponse();
                 
-                    currentImageIndex--;
-                    currentIteration = 1;
-                    clearForm();
-                    updateDisplay();
-                    // Don't auto-save - user must manually save
+                currentImageIndex--;
+                currentIteration = 1;
+                
+                // Try to load existing response for this image
+                const hasExisting = loadExistingResponseForCurrentImage();
+                updateDisplay();
+                
+                if (hasExisting) {
+                    showAlert('Loaded previous response for this file. Changes will update the existing response.', 'info');
+                } else {
                     showAlert('Moved to previous file.', 'info');
+                }
             }
         }
 
@@ -1497,17 +1685,21 @@
             if (targetImage) {
                 const imageNum = parseInt(targetImage);
                 if (imageNum >= 1 && imageNum <= imageDataUrls.length) {
-                    // Save current response if any
-                    const formData = getFormData();
-                    if (formData) {
-                        responses.push(formData);
-                    }
+                    // Save current response (update existing or push new)
+                    saveCurrentResponse();
                     
                     currentImageIndex = imageNum - 1;
                     currentIteration = 1;
-                    clearForm();
+                    
+                    // Try to load existing response for this image
+                    const hasExisting = loadExistingResponseForCurrentImage();
                     updateDisplay();
-                    showAlert(`Jumped to file ${imageNum}.`, 'info');
+                    
+                    if (hasExisting) {
+                        showAlert(`Jumped to file ${imageNum}. Loaded existing response.`, 'info');
+                    } else {
+                        showAlert(`Jumped to file ${imageNum}.`, 'info');
+                    }
                 } else {
                     showAlert('Invalid file number.', 'warning');
                 }
@@ -1518,8 +1710,12 @@
         function repeatImage() {
             const formData = getFormData();
             if (formData) {
-                responses.push(formData);
+                // For repeat, always push a new response (new iteration)
+                // First save the current response properly
+                saveCurrentResponse();
+                
                 currentIteration++;
+                editingResponseIndex = null; // New iteration, not editing
                 clearForm();
                 updateDisplay();
                 // Don't auto-save - user must manually save
@@ -1533,15 +1729,22 @@
         function nextImage() {
             const formData = getFormData();
             if (formData) {
-                responses.push(formData);
+                // Save current response (update existing or push new)
+                saveCurrentResponse();
                 
                 if (currentImageIndex < imageDataUrls.length - 1) {
                     currentImageIndex++;
                     currentIteration = 1;
-                    clearForm();
+                    
+                    // Try to load existing response for this image
+                    const hasExisting = loadExistingResponseForCurrentImage();
                     updateDisplay();
-                    // Don't auto-save - user must manually save
-                    showAlert('Moved to next file.', 'info');
+                    
+                    if (hasExisting) {
+                        showAlert('Moved to next file. Loaded existing response.', 'info');
+                    } else {
+                        showAlert('Moved to next file.', 'info');
+                    }
                 } else {
                     // Last image - finish survey
                     finishSurvey();
@@ -1699,7 +1902,8 @@
         function finishSurvey() {
             const formData = getFormData();
             if (formData) {
-                responses.push(formData);
+                // Save current response (update existing or push new)
+                saveCurrentResponse();
                 
                 // Show results
                 document.getElementById('survey-section').classList.add('hidden');
@@ -1783,6 +1987,7 @@
                 currentImageIndex = 0;
                 currentIteration = 1;
                 responses = [];
+                editingResponseIndex = null;
                 
                 // Clear form
                 clearForm();
